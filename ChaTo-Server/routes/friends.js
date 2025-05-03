@@ -6,7 +6,10 @@ const auth = require('../middlewares/auth');
 const router = express.Router();
 
 // Search users
-router.get('/search', auth, friendController.searchUsers);
+router.get('/search', auth, async (req, res, next) => {
+  console.log('وصل طلب بحث عن صديق:', req.query);
+  friendController.searchUsers(req, res, next);
+});
 
 // Send friend request
 router.post('/request', auth, [

@@ -1,0 +1,17 @@
+{
+  "register": {
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "createAccount": "إنشاء حساب",
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "login": "تسجيل الدخول",
+    "nameRequired": "الاسم مطلوب",
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "passwordRequired": "كلمة المرور مطلوبة",
+    "passwordsDontMatch": "كلمتا المرور غير متطابقتين",
+    "registrationFailed": "فشل التسجيل",
+    "creatingAccount": "جاري إنشاء الحساب..."
+  }
+}

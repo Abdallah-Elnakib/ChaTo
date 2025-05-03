@@ -24,6 +24,19 @@ const io = new Server(server, {
   },
 });
 
+// --- SOCKET.IO USER SOCKETS ---
+const userSockets = {}; // userId => socketId
+io.on('connection', (socket) => {
+  socket.on('register', (userId) => {
+    userSockets[userId] = socket.id;
+  });
+  socket.on('disconnect', () => {
+    for (const [userId, id] of Object.entries(userSockets)) {
+      if (id === socket.id) delete userSockets[userId];
+    }
+  });
+});
+
 // Middlewares
 app.use(cors({
   origin: '*',

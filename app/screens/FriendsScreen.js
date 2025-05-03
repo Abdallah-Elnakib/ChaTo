@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const DUMMY_AVATAR = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff';
+import getServerUrl from '../utils/getServerUrl';
 
 const FriendsScreen = ({ navigation }) => {
   const [friends, setFriends] = useState([]);
@@ -18,7 +19,7 @@ const FriendsScreen = ({ navigation }) => {
     const fetchFriends = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5000/api/friends/list', {
+        const response = await fetch(`${getServerUrl()}/api/friends/list`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await response.json();
@@ -33,7 +34,7 @@ const FriendsScreen = ({ navigation }) => {
     if (!search) return;
     setSearching(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/friends/search?query=${encodeURIComponent(search)}`, {
+      const response = await fetch(`${getServerUrl()}/api/friends/search?query=${encodeURIComponent(search)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
@@ -44,7 +45,7 @@ const FriendsScreen = ({ navigation }) => {
 
   const handleAddFriend = async (userId) => {
     try {
-      const response = await fetch('http://localhost:5000/api/friends/request', {
+      const response = await fetch(`${getServerUrl()}/api/friends/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ toUserId: userId })

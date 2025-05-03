@@ -12,9 +12,13 @@ function RootLayoutNav() {
   const segments = useSegments();
 
   React.useEffect(() => {
-    const inAuthPages = segments[0] === 'login' || segments[0] === 'register';
+    const inAuthPages = ['login', 'register', 'forgot-password', 'reset-password', 'verify-email'].includes(segments[0]);
     if (!loading && !isAuthenticated && !inAuthPages) {
       router.replace({ pathname: 'login' } as any);
+    }
+    // إذا أصبح المستخدم موثّقًا وهو في صفحات auth، انقله إلى التبويبات
+    if (!loading && isAuthenticated && inAuthPages) {
+      router.replace({ pathname: '/(tabs)/chats' } as any);
     }
   }, [loading, isAuthenticated, router, segments]);
 

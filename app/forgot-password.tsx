@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +24,10 @@ export default function ForgotPasswordScreen() {
       Alert.alert(t('success'), t('forgotPassword.codeSent'));
       router.push({ pathname: 'reset-password', params: { email } } as any);
     } catch (error: any) {
-      Alert.alert(t('error'), error.response?.data?.message || t('forgotPassword.failed'));
+      Alert.alert(
+        t('error'),
+        error.response?.data?.message || error.message || t('forgotPassword.failed')
+      );
     } finally {
       setLoading(false);
     }
@@ -31,29 +35,34 @@ export default function ForgotPasswordScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }] }>
-      <View style={[styles.card, { backgroundColor: colors.card, shadowColor: '#25D366' }] }>
-        <Text style={[styles.title, { color: colors.primary }]}>{t('forgotPassword.title')}</Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: '#25D366' }]}
-          placeholder={t('forgotPassword.email')}
-          placeholderTextColor={colors.textSecondary}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSend}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          {loading ? (
-            <ActivityIndicator color={'#fff'} />
-          ) : (
-            <Text style={styles.buttonText}>{t('forgotPassword.send')}</Text>
-          )}
-        </TouchableOpacity>
+      <View style={styles.cardShadow}>
+        <View style={[styles.card, { backgroundColor: colors.card }] }>
+          <View style={styles.iconTitleRow}>
+            <Ionicons name="lock-closed-outline" size={28} color="#25D366" style={{ marginRight: 8 }} />
+            <Text style={[styles.title, { color: '#25D366' }]}>{t('forgotPassword.title')}</Text>
+          </View>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: '#25D366' }]}
+            placeholder={t('forgotPassword.email')}
+            placeholderTextColor={colors.textSecondary}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleSend}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator color={'#fff'} />
+            ) : (
+              <Text style={styles.buttonText}>{t('forgotPassword.send')}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -67,45 +76,50 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#101a13',
   },
+  cardShadow: {
+    borderRadius: 30,
+    shadowColor: '#25D366',
+    shadowOpacity: 0.25,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 16,
+  },
   card: {
-    width: '100%',
-    maxWidth: 370,
-    borderRadius: 26,
+    width: 340,
+    borderRadius: 30,
     padding: 32,
     alignItems: 'center',
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 12,
     backgroundColor: '#181f1b',
+  },
+  iconTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 18,
   },
   title: {
     fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 28,
-    textAlign: 'center',
-    color: '#25D366',
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
   input: {
     width: '100%',
     height: 50,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1.5,
     paddingHorizontal: 18,
     fontSize: 17,
-    marginBottom: 18,
+    marginBottom: 22,
     backgroundColor: '#121a14',
     color: '#fff',
   },
   button: {
     width: '100%',
     height: 50,
-    borderRadius: 14,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 8,
     backgroundColor: '#25D366',
+    marginTop: 8,
   },
   buttonText: {
     fontSize: 18,

@@ -1,55 +1,83 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ActivityIndicator, Alert, I18nManager, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import I18n from './constants/i18n'; // المسار الصحيح إذا كان الملف داخل app
 import { useTheme } from './context/ThemeContext';
 import { login } from './services/authService';
-import { saveToken } from './utils/storage';
+
+import { useAuth } from './context/AuthContext';
 
 export default function LoginScreen() {
+  const [lang, setLang] = useState(I18n.locale);
+
+  // عند بدء الشاشة، جلب اللغة من AsyncStorage وتعيينها
+  useEffect(() => {
+    AsyncStorage.getItem('appLang').then(storedLang => {
+      if (storedLang && storedLang !== I18n.locale) {
+        I18n.locale = storedLang;
+        setLang(storedLang);
+        I18nManager.forceRTL(storedLang === 'ar');
+      }
+    });
+  }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { t } = useTranslation();
+
   const { colors } = useTheme();
 
+
+
+  const { login: authLogin } = useAuth();
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert(t('error'), t('login.fillAllFields'));
+      Alert.alert(I18n.t('error'), I18n.t('login.fillAllFields'));
       return;
     }
     setLoading(true);
     try {
       const response = await login(email, password);
-      await saveToken(response.token);
-      router.replace({ pathname: '/(tabs)' } as any);
+      await authLogin(response.token, response.user);
+      // لا داعي للتوجيه هنا، سيتم التوجيه تلقائياً عبر RootLayoutNav
     } catch (error: any) {
-      Alert.alert(t('error'), error.message || t('login.failed'));
+      let errorMsg = error.message || I18n.t('login.failed');
+      if (error.response && error.response.data) {
+        if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        } else if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+          const first = error.response.data.errors[0];
+          if (typeof first === 'string') errorMsg = first;
+          else if (first && first.msg) errorMsg = first.msg;
+        }
+      }
+      Alert.alert(I18n.t('error'), errorMsg);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row' }]}>
         <View style={[styles.card, { backgroundColor: colors.card, shadowColor: '#25D366' }]}>
-          <View style={[styles.logoRow]}>
+          <View style={[styles.logoRow, { flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row' }]}>
             <View style={styles.logoIconCircle}>
               <Ionicons name="chatbubble-ellipses" size={24} color="#25D366" />
             </View>
-            <Text style={[styles.logo, { color: '#25D366', fontFamily: 'sans-serif-medium', letterSpacing: 3 }]}>ChaTo</Text>
+            <Text style={[styles.logo, { color: '#25D366', fontFamily: 'sans-serif-medium', letterSpacing: 3, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>ChaTo</Text>
           </View>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'sans-serif', fontWeight: '700' }]}>{t('login.welcome')}</Text>
+          <Text style={[styles.title, { color: colors.text, fontFamily: 'sans-serif', fontWeight: '700', textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>{I18n.t('login.welcome')}</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: '#25D366', shadowColor: '#25D366' }]}
-            placeholder={t('login.email')}
+            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: '#25D366', shadowColor: '#25D366', textAlign: I18nManager.isRTL ? 'right' : 'left' }]} 
+            placeholder={I18n.t('login.email')}
             placeholderTextColor={colors.textSecondary}
             value={email}
             onChangeText={setEmail}
@@ -58,15 +86,15 @@ export default function LoginScreen() {
           />
           <View style={{ width: '100%', position: 'relative' }}>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: '#25D366', shadowColor: '#25D366', paddingRight: 44 }]}
-              placeholder={t('login.password')}
+              style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: '#25D366', shadowColor: '#25D366', paddingRight: 44, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}
+              placeholder={I18n.t('login.password')}
               placeholderTextColor={colors.textSecondary}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity
-              style={styles.eyeIcon}
+              style={[styles.eyeIcon, I18nManager.isRTL ? { left: 14, right: undefined } : { right: 14, left: undefined }]}
               onPress={() => setShowPassword((prev) => !prev)}
               activeOpacity={0.7}
             >
@@ -75,9 +103,13 @@ export default function LoginScreen() {
           </View>
           <TouchableOpacity
             onPress={() => router.push({ pathname: 'forgot-password' } as any)}
-            style={styles.forgotLink}
+            style={[
+              styles.forgotLink,
+              // ضبط المحاذاة حسب اتجاه اللغة
+              { alignSelf: I18nManager.isRTL ? 'flex-start' : 'flex-end' }
+            ]}
           >
-            <Text style={styles.forgotText}>{t('login.forgotPassword')}</Text>
+            <Text style={styles.forgotText}>{I18n.t('login.forgotPassword')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.button}
@@ -89,7 +121,7 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator color={'#fff'} />
               ) : (
-                <Text style={styles.buttonText}>{t('login.login')}</Text>
+                <Text style={styles.buttonText}>{I18n.t('login.login')}</Text>
               )}
             </View>
           </TouchableOpacity>
@@ -97,10 +129,46 @@ export default function LoginScreen() {
             onPress={() => router.push({ pathname: 'register' } as any)}
             style={styles.registerLink}
           >
-            <Text style={styles.registerText}>{t('login.noAccount')}</Text>
+            <Text style={styles.registerText}>{I18n.t('login.noAccount')}</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          onPress={async () => {
+            const newLang = (I18n.locale === 'ar' ? 'en' : 'ar');
+            I18n.locale = newLang;
+            setLang(newLang);
+            I18nManager.forceRTL(newLang === 'ar');
+            await AsyncStorage.setItem('appLang', newLang);
+            Alert.alert('تم تغيير اللغة', 'سيتم إعادة تحميل التطبيق الآن');
+            try {
+              const Updates = await import('expo-updates');
+              if (Updates && Updates.reloadAsync) {
+                await Updates.reloadAsync();
+              } else {
+                Alert.alert('خطأ', 'لم يتم العثور على expo-updates!');
+              }
+            } catch (e) {
+              if (e instanceof Error) {
+                Alert.alert('خطأ', 'فشل في إعادة تحميل التطبيق: ' + e.message);
+              } else {
+                Alert.alert('خطأ', 'فشل في إعادة تحميل التطبيق: ' + String(e));
+              }
+            }
+          }}
+          style={{
+            position: 'absolute',
+            top: 64,
+            [lang === 'ar' ? 'left' : 'right']: 24,
+            zIndex: 10
+          }}
+        >
+          <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 16 }}>
+            {I18n.locale === 'ar' ? 'English' : 'العربية'}
+          </Text>
+        </TouchableOpacity>
       </View>
+
     </KeyboardAvoidingView>
   );
 }
@@ -204,6 +272,7 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     marginTop: 10,
+    alignSelf: 'center', // توسيط الرابط في كل الاتجاهات
   },
   registerText: {
     fontSize: 15,
@@ -220,7 +289,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   forgotLink: {
-    alignSelf: 'flex-end',
+    // alignSelf ديناميكي في JSX
     marginBottom: 8,
   },
   forgotText: {

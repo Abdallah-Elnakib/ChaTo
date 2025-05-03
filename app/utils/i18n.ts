@@ -97,7 +97,8 @@ i18n
         },
         react: {
             useSuspense: false
-        }
+        },
+        debug: true // Show i18n warnings in console for debugging
     });
 
 export default i18n; 

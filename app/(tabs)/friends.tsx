@@ -6,7 +6,9 @@ import I18n from '../constants/i18n';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-const SERVER_URL = 'http://192.168.1.5:5000/api'; // ضع هنا عنوان IP الصحيح لجهازك والمنفذ الصحيح
+import getServerUrl from '../utils/server';
+// لا تحفظ السيرفر في متغير ثابت، استدعِ الدالة مباشرة عند كل طلب
+// const SERVER_URL = getServerUrl();
 
 export default function FriendsScreen() {
   const { darkMode } = useTheme();
@@ -37,10 +39,18 @@ export default function FriendsScreen() {
     setSearchResult(null);
     setSearchError('');
     try {
-      const res = await fetch(`${SERVER_URL}/friends/search?query=` + encodeURIComponent(searchEmail), {
+      const url = `${getServerUrl()}/friends/search?query=` + encodeURIComponent(searchEmail);
+      console.log('Searching friend at:', url);
+      console.log('Token used:', token);
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
+      console.log('Search response:', data);
+      Alert.alert(
+        'تفاصيل البحث',
+        `Status: ${res.status}\nToken: ${token?.slice(0, 20)}...\nResponse: ${JSON.stringify(data)}`
+      );
       if (res.ok && data.users && data.users.length > 0) {
         // Exclude self
         const found = data.users.find((u: any) => u.email === searchEmail && u._id !== user._id);
@@ -51,6 +61,7 @@ export default function FriendsScreen() {
       }
     } catch (e: any) {
       setSearchError(I18n.t('errorOccurred', { error: e.message }));
+      Alert.alert('خطأ في البحث', e.message || JSON.stringify(e));
     }
     setSearchLoading(false);
   };
@@ -59,7 +70,9 @@ export default function FriendsScreen() {
     if (!searchResult) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`${SERVER_URL}/friends/request`, {
+      const url = `${getServerUrl()}/friends/request`;
+      console.log('Sending friend request to:', url);
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,6 +81,7 @@ export default function FriendsScreen() {
         body: JSON.stringify({ toUserId: searchResult._id }),
       });
       const data = await res.json();
+      console.log('Friend request response:', data);
       if (res.ok) {
         Alert.alert(I18n.t('addFriend'), I18n.t('friendRequest'));
       } else {
@@ -83,7 +97,9 @@ export default function FriendsScreen() {
     if (!searchResult) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`${SERVER_URL}/friends/block`, {
+      const url = `${getServerUrl()}/friends/block`;
+      console.log('Sending block request to:', url);
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,6 +108,7 @@ export default function FriendsScreen() {
         body: JSON.stringify({ userIdToBlock: searchResult._id }),
       });
       const data = await res.json();
+      console.log('Block response:', data);
       if (res.ok) {
         Alert.alert(I18n.t('addFriend'), I18n.t('blocked'));
       } else {
@@ -175,27 +192,53 @@ export default function FriendsScreen() {
             </TouchableOpacity>
             {searchError ? <Text style={{ color: 'red', marginBottom: 8 }}>{searchError}</Text> : null}
             {searchResult && (
-              <View style={{ alignItems: 'center', marginTop: 10 }}>
-                {searchResult.avatar ? (
-                  <Image source={{ uri: searchResult.avatar }} style={{ width: 60, height: 60, borderRadius: 30, marginBottom: 8 }} />
-                ) : (
-                  <Ionicons name="person-circle" size={60} color="#25D366" style={{ marginBottom: 8 }} />
-                )}
-                <Text style={{ fontWeight: 'bold', fontSize: 16, color: darkMode ? '#fff' : '#222' }}>{searchResult.username}</Text>
-                <Text style={{ fontSize: 14, color: darkMode ? '#bbb' : '#888', marginBottom: 8 }}>{searchResult.email}</Text>
-                <View style={{ flexDirection: 'row', marginTop: 8 }}>
-                  <TouchableOpacity style={{ backgroundColor: '#25D366', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, marginHorizontal: 4 }} onPress={handleSendRequest} disabled={actionLoading}>
-                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>{I18n.t('addFriend')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={{ backgroundColor: '#e53935', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, marginHorizontal: 4 }} onPress={handleBlock} disabled={actionLoading}>
-                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>{I18n.t('block') || 'Block'}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={{ backgroundColor: '#888', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, marginHorizontal: 4 }} onPress={handleProfile}>
-                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>{I18n.t('profile')}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+  <View style={{
+    alignItems: 'center',
+    marginTop: 16,
+    backgroundColor: darkMode ? '#23272f' : '#fff',
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: darkMode ? '#2d2d2d' : '#e0e0e0',
+    width: 300,
+  }}>
+    <View style={{
+      backgroundColor: darkMode ? '#181818' : '#f5f5f5',
+      borderRadius: 50,
+      padding: 6,
+      marginBottom: 12,
+      shadowColor: '#25D366',
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      elevation: 4,
+    }}>
+      {searchResult.avatar ? (
+        <Image source={{ uri: searchResult.avatar }} style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: '#25D366' }} />
+      ) : (
+        <Ionicons name="person-circle" size={80} color="#25D366" />
+      )}
+    </View>
+    <Text style={{ fontWeight: 'bold', fontSize: 22, color: darkMode ? '#fff' : '#222', marginBottom: 3 }}>{searchResult.username}</Text>
+    <Text style={{ fontSize: 15, color: darkMode ? '#bbb' : '#888', marginBottom: 20 }}>{searchResult.email}</Text>
+    <TouchableOpacity style={{ backgroundColor: '#25D366', borderRadius: 14, paddingVertical: 13, marginBottom: 12, width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', elevation: 2 }} onPress={handleSendRequest} disabled={actionLoading}>
+      <Ionicons name="person-add" size={20} color="#fff" style={{ marginRight: 8 }} />
+      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 17 }}>{I18n.t('addFriend')}</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={{ backgroundColor: '#e53935', borderRadius: 14, paddingVertical: 13, marginBottom: 12, width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', elevation: 2 }} onPress={handleBlock} disabled={actionLoading}>
+      <Ionicons name="close-circle" size={20} color="#fff" style={{ marginRight: 8 }} />
+      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 17 }}>{I18n.t('block') && !I18n.t('block').includes('translation') ? I18n.t('block') : 'Block'}</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={{ backgroundColor: '#2196F3', borderRadius: 14, paddingVertical: 13, width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', elevation: 2 }} onPress={handleProfile}>
+      <Ionicons name="person" size={20} color="#fff" style={{ marginRight: 8 }} />
+      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 17 }}>{I18n.t('profile')}</Text>
+    </TouchableOpacity>
+  </View>
+)}
             <TouchableOpacity onPress={() => setShowAddModal(false)} style={{ marginTop: 18 }}>
               <Text style={{ color: '#888' }}>{I18n.t('close')}</Text>
             </TouchableOpacity>

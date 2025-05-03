@@ -40,6 +40,17 @@ exports.sendFriendRequest = async (req, res) => {
       type: 'friend_request',
       content: `${user.username} sent you a friend request.`
     });
+    // إرسال إشعار socket للطرف الآخر إذا كان متصلًا
+    try {
+      const { io, userSockets } = require('../server');
+      if (userSockets[toUserId]) {
+        io.to(userSockets[toUserId]).emit('friendRequest', {
+          from: user.username,
+          fromId: userId,
+          content: `${user.username} أرسل لك طلب صداقة`
+        });
+      }
+    } catch (err) { console.error('Socket emit error:', err); }
     res.json({ message: 'Friend request sent.' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -66,6 +77,16 @@ exports.respondToFriendRequest = async (req, res) => {
         type: 'system',
         content: `${user.username} accepted your friend request.`
       });
+      // Real-time socket notification (in English)
+      try {
+        const { io, userSockets } = require('../server');
+        if (userSockets[fromUserId]) {
+          io.to(userSockets[fromUserId]).emit('friendAccepted', {
+            from: user.username,
+            content: `Your friend request was accepted by ${user.username}`
+          });
+        }
+      } catch (err) { console.error('Socket emit error (accept friend):', err); }
     }
     await user.save();
     res.json({ message: accept ? 'Friend request accepted.' : 'Friend request declined.' });

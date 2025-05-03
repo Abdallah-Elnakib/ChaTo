@@ -1,8 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import I18n from '../constants/i18n';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import getServerUrl from '../utils/server';
+import { fromNow } from '../utils/time';
 
 type Notification = {
   id: number;
@@ -11,38 +15,45 @@ type Notification = {
   message: string;
   time: string;
   read: boolean;
+  fromId?: string;
+  fromName?: string; // Added for sender's name
 };
 
 export default function NotificationsScreen() {
   const { darkMode } = useTheme();
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      type: 'message',
-      title: I18n.t('newMessage'),
-      message: I18n.t('messageFrom', { name: 'John' }),
-      time: I18n.t('timeAgo', { time: '2m' }),
-      read: false,
-    },
-    {
-      id: 2,
-      type: 'friend',
-      title: I18n.t('friendRequest'),
-      message: I18n.t('friendRequestFrom', { name: 'Jane' }),
-      time: I18n.t('timeAgo', { time: '5m' }),
-      read: false,
-    },
-    {
-      id: 3,
-      type: 'system',
-      title: I18n.t('systemUpdate'),
-      message: I18n.t('newFeaturesAvailable'),
-      time: I18n.t('timeAgo', { time: '1h' }),
-      read: true,
-    },
-  ]);
-
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+
+  // Fetch notifications from backend (simulate with mock data for now)
+  useEffect(() => {
+    async function fetchNotifications() {
+      if (!user) return;
+      try {
+        let token = null;
+        try {
+          token = await AsyncStorage.getItem('token');
+        } catch {}
+        // استبدل الرابط التالي بمسار جلب الإشعارات من السيرفر الخاص بك
+        const res = await fetch(`${getServerUrl()}/notifications?userId=${user._id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          Alert.alert('Error', data.message || 'Failed to fetch notifications');
+          return;
+        }
+        setNotifications(data.notifications || []);
+      } catch (e: any) {
+        Alert.alert('Error', e.message || 'Failed to fetch notifications');
+      }
+    }
+    fetchNotifications();
+  }, [user]);
+
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -61,6 +72,77 @@ export default function NotificationsScreen() {
     setNotifications(notifications.map(notification => 
       notification.id === id ? { ...notification, read: true } : notification
     ));
+  };
+
+  // Handle accepting a friend request
+  const handleAccept = async (fromId: string) => {
+    try {
+      // Get token (if you store it in AsyncStorage or context)
+      let token = null;
+      try {
+        token = await AsyncStorage.getItem('token');
+      } catch {}
+      // Call backend API to accept the friend request (المسار الصحيح)
+      const res = await fetch(`${getServerUrl()}/friends/respond`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ fromUserId: fromId, accept: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        Alert.alert('Error', data.message || 'Failed to accept friend request');
+        return;
+      }
+      // Optionally, update friends list here (emit event or refresh)
+      // Mark notification as read and update time to real time
+      setNotifications(notifications => notifications.map(n =>
+        (n.type === 'friend' && (n.fromId === fromId || n.id.toString() === fromId))
+          ? { ...n, read: true, time: (data.acceptedAt || new Date().toISOString()) }
+          : n
+      ));
+      Alert.alert('Success', 'Friend request accepted!');
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to accept friend request');
+    }
+  };
+
+  // Handle rejecting a friend request
+  const handleReject = async (fromId: string) => {
+    try {
+      let token = null;
+      try {
+        token = await AsyncStorage.getItem('token');
+      } catch {}
+      const res = await fetch(`${getServerUrl()}/friends/respond`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ fromUserId: fromId, accept: false }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        Alert.alert('Error', data.message || 'Failed to reject friend request');
+        return;
+      }
+      setNotifications(notifications => notifications.map(n =>
+        (n.type === 'friend' && (n.fromId === fromId || n.id.toString() === fromId)) ? { ...n, read: true } : n
+      ));
+      Alert.alert('Rejected', `Friend request from user ${fromId} has been rejected`);
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to reject friend request');
+    }
+  };
+
+  // Helper to get the user id for friend notifications 
+  const getFromId = (notification: Notification) => {
+    // If fromId exists, use it, otherwise fallback to id
+    // @ts-ignore
+    return notification.fromId ?? notification.id;
   };
 
   const filteredNotifications = showUnreadOnly
@@ -117,7 +199,23 @@ export default function NotificationsScreen() {
               <View style={styles.notificationContent}>
                 <Text style={[styles.notificationTitle, darkMode && { color: '#fff' }]}>{notification.title}</Text>
                 <Text style={[styles.notificationMessage, darkMode && { color: '#bbb' }]}>{notification.message}</Text>
-                <Text style={[styles.notificationTime, darkMode && { color: '#888' }]}>{notification.time}</Text>
+                <Text style={[styles.notificationTime, darkMode && { color: '#888' }]}>{fromNow(notification.time)}</Text>
+                {notification.type === 'friend' && (
+                  <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                    <TouchableOpacity
+                      style={{ backgroundColor: '#25D366', padding: 8, borderRadius: 8, marginRight: 8 }}
+                      onPress={() => handleAccept(String(getFromId(notification)))}
+                    >
+                      <Text style={{ color: '#fff' }}>Accept</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{ backgroundColor: '#ff4444', padding: 8, borderRadius: 8 }}
+                      onPress={() => handleReject(String(getFromId(notification)))}
+                    >
+                      <Text style={{ color: '#fff' }}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
               {!notification.read && (
                 <View style={styles.unreadDot} />

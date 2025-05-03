@@ -3,6 +3,16 @@ import I18n from 'i18n-js';
 
 (I18n as any).translations = {
   en: {
+    login: {
+      welcome: 'Welcome to ChaTo',
+      email: 'Email',
+      password: 'Password',
+      login: 'Login',
+      noAccount: "Don't have an account? Register",
+      fillAllFields: 'Please fill in all fields',
+      failed: 'Login failed. Please try again.',
+      forgotPassword: 'Forgot password?'
+    },
     hello: 'Hello',
     settings: 'Settings',
     logout: 'Logout',
@@ -49,6 +59,16 @@ import I18n from 'i18n-js';
     unknownError: 'Unknown error',
   },
   ar: {
+    login: {
+      welcome: 'مرحباً بك في تشاتو',
+      email: 'البريد الإلكتروني',
+      password: 'كلمة المرور',
+      login: 'تسجيل الدخول',
+      noAccount: 'ليس لديك حساب؟ سجل الآن',
+      fillAllFields: 'الرجاء ملء جميع الحقول',
+      failed: 'فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.',
+      forgotPassword: 'نسيت كلمة المرور؟'
+    },
     hello: 'مرحبا',
     settings: 'الإعدادات',
     logout: 'تسجيل الخروج',

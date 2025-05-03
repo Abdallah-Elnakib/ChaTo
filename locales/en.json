@@ -13,5 +13,7 @@
     "passwordsDontMatch": "Passwords do not match",
     "registrationFailed": "Registration failed",
     "creatingAccount": "Creating account..."
-  }
+  },
+  "addYourFirstFriend": "Add your first friend and start chatting!",
+  "blockedYou": "This user has blocked you"
 }

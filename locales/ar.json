@@ -13,5 +13,7 @@
     "passwordsDontMatch": "كلمتا المرور غير متطابقتين",
     "registrationFailed": "فشل التسجيل",
     "creatingAccount": "جاري إنشاء الحساب..."
-  }
+  },
+  "addYourFirstFriend": "أضف صديقك الأول وابدأ المحادثة!",
+  "blockedYou": "هذا المستخدم قام بحظرك"
 }

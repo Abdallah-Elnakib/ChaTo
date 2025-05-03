@@ -31,6 +31,7 @@ import I18n from 'i18n-js';
     about: 'About',
     noFriends: 'No friends yet',
     addFriend: 'Add Friend',
+    addYourFirstFriend: 'Add your first friend and start chatting!',
     notificationsEmpty: 'No notifications',
     allCaughtUp: "You're all caught up!",
     preferences: 'Preferences',
@@ -57,6 +58,7 @@ import I18n from 'i18n-js';
     aiError: 'Sorry, I could not process that.',
     errorOccurred: 'An error occurred: %{error}',
     unknownError: 'Unknown error',
+    blockedYou: 'This user has blocked you',
   },
   ar: {
     login: {
@@ -87,6 +89,7 @@ import I18n from 'i18n-js';
     about: 'حول',
     noFriends: 'لا يوجد أصدقاء بعد',
     addFriend: 'إضافة صديق',
+    addYourFirstFriend: 'أضف صديقك الأول وابدأ المحادثة!',
     notificationsEmpty: 'لا توجد إشعارات',
     allCaughtUp: 'لقد اطلعت على كل شيء!',
     preferences: 'التفضيلات',
@@ -113,6 +116,7 @@ import I18n from 'i18n-js';
     aiError: 'عذراً، لم أتمكن من معالجة ذلك.',
     errorOccurred: 'حدث خطأ: %{error}',
     unknownError: 'خطأ غير معروف',
+    blockedYou: 'هذا المستخدم قام بحظرك',
   },
 };
 

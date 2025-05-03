@@ -30,4 +30,10 @@ router.post('/block', auth, [
   body('userIdToBlock').isMongoId().withMessage('Invalid user ID.')
 ], friendController.blockUser);
 
+// Get blocked users
+router.get('/blocked', auth, friendController.getBlockedUsers);
+
+// Unblock user
+router.post('/unblock', auth, friendController.unblockUser);
+
 module.exports = router; 

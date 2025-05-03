@@ -9,14 +9,13 @@ import getServerUrl from '../utils/server';
 import { fromNow } from '../utils/time';
 
 type Notification = {
-  id: number;
-  type: 'message' | 'friend' | 'system';
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  fromId?: string;
-  fromName?: string; // Added for sender's name
+  _id: string;
+  type: string;
+  content: string;
+  createdAt: string;
+  isRead: boolean;
+  user: string;
+
 };
 
 export default function NotificationsScreen() {
@@ -25,28 +24,29 @@ export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
-  // Fetch notifications from backend (simulate with mock data for now)
   useEffect(() => {
     async function fetchNotifications() {
-      if (!user) return;
+      console.log('fetchNotifications called, user:', user);
+      if (!user || !user.id) return;
       try {
         let token = null;
         try {
           token = await AsyncStorage.getItem('token');
         } catch {}
-        // استبدل الرابط التالي بمسار جلب الإشعارات من السيرفر الخاص بك
-        const res = await fetch(`${getServerUrl()}/notifications?userId=${user._id}`, {
+        const res = await fetch(`${getServerUrl()}/notifications?userId=${user.id}`, {
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         });
         const data = await res.json();
+        console.log('notifications data:', data);
         if (!res.ok) {
           Alert.alert('Error', data.message || 'Failed to fetch notifications');
           return;
         }
         setNotifications(data.notifications || []);
+        console.log('notifications state:', data.notifications || []);
       } catch (e: any) {
         Alert.alert('Error', e.message || 'Failed to fetch notifications');
       }
@@ -68,96 +68,27 @@ export default function NotificationsScreen() {
     }
   };
 
-  const markAsRead = (id: number) => {
+  const markAsRead = (id: string) => {
     setNotifications(notifications.map(notification => 
-      notification.id === id ? { ...notification, read: true } : notification
+      notification._id === id ? { ...notification, isRead: true } : notification
     ));
   };
 
-  // Handle accepting a friend request
-  const handleAccept = async (fromId: string) => {
-    try {
-      // Get token (if you store it in AsyncStorage or context)
-      let token = null;
-      try {
-        token = await AsyncStorage.getItem('token');
-      } catch {}
-      // Call backend API to accept the friend request (المسار الصحيح)
-      const res = await fetch(`${getServerUrl()}/friends/respond`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ fromUserId: fromId, accept: true }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        Alert.alert('Error', data.message || 'Failed to accept friend request');
-        return;
-      }
-      // Optionally, update friends list here (emit event or refresh)
-      // Mark notification as read and update time to real time
-      setNotifications(notifications => notifications.map(n =>
-        (n.type === 'friend' && (n.fromId === fromId || n.id.toString() === fromId))
-          ? { ...n, read: true, time: (data.acceptedAt || new Date().toISOString()) }
-          : n
-      ));
-      Alert.alert('Success', 'Friend request accepted!');
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to accept friend request');
-    }
-  };
 
-  // Handle rejecting a friend request
-  const handleReject = async (fromId: string) => {
-    try {
-      let token = null;
-      try {
-        token = await AsyncStorage.getItem('token');
-      } catch {}
-      const res = await fetch(`${getServerUrl()}/friends/respond`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ fromUserId: fromId, accept: false }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        Alert.alert('Error', data.message || 'Failed to reject friend request');
-        return;
-      }
-      setNotifications(notifications => notifications.map(n =>
-        (n.type === 'friend' && (n.fromId === fromId || n.id.toString() === fromId)) ? { ...n, read: true } : n
-      ));
-      Alert.alert('Rejected', `Friend request from user ${fromId} has been rejected`);
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to reject friend request');
-    }
-  };
 
-  // Helper to get the user id for friend notifications 
-  const getFromId = (notification: Notification) => {
-    // If fromId exists, use it, otherwise fallback to id
-    // @ts-ignore
-    return notification.fromId ?? notification.id;
-  };
+  
 
   const filteredNotifications = showUnreadOnly
-    ? notifications.filter(n => !n.read)
+    ? notifications.filter(n => !n.isRead)
     : notifications;
 
   return (
     <View style={[styles.container, darkMode && { backgroundColor: '#181818' }] }>
-      {/* Header with logo and app name */}
-      <View style={styles.header}>
+        <View style={styles.header}>
         <Ionicons name="notifications" size={32} color="#25D366" style={styles.logo} />
         <Text style={[styles.appName, darkMode && { color: '#25D366' }]}>ChaTo</Text>
       </View>
 
-      {/* Notification Settings */}
       <View style={[styles.settingsContainer, darkMode && { backgroundColor: '#222', borderColor: '#333' }] }>
         <View style={styles.settingItem}>
           <Text style={[styles.settingText, darkMode && { color: '#fff' }]}>{I18n.t('showUnreadOnly')}</Text>
@@ -170,7 +101,6 @@ export default function NotificationsScreen() {
         </View>
       </View>
 
-      {/* Notifications List */}
       <ScrollView style={styles.notificationsList}>
         {filteredNotifications.length === 0 ? (
           <View style={styles.emptyState}>
@@ -181,13 +111,13 @@ export default function NotificationsScreen() {
         ) : (
           filteredNotifications.map((notification) => (
             <TouchableOpacity
-              key={notification.id}
+              key={notification._id}
               style={[
                 styles.notificationItem,
-                !notification.read && styles.unreadNotification,
-                darkMode && (notification.read ? styles.notificationItemDark : styles.unreadNotificationDark)
+                !notification.isRead && styles.unreadNotification,
+                darkMode && (notification.isRead ? styles.notificationItemDark : styles.unreadNotificationDark)
               ]}
-              onPress={() => markAsRead(notification.id)}
+              onPress={() => markAsRead(notification._id)}
             >
               <View style={[styles.notificationIcon, darkMode && { backgroundColor: '#263238' }] }>
                 <Ionicons 
@@ -197,27 +127,12 @@ export default function NotificationsScreen() {
                 />
               </View>
               <View style={styles.notificationContent}>
-                <Text style={[styles.notificationTitle, darkMode && { color: '#fff' }]}>{notification.title}</Text>
-                <Text style={[styles.notificationMessage, darkMode && { color: '#bbb' }]}>{notification.message}</Text>
-                <Text style={[styles.notificationTime, darkMode && { color: '#888' }]}>{fromNow(notification.time)}</Text>
-                {notification.type === 'friend' && (
-                  <View style={{ flexDirection: 'row', marginTop: 8 }}>
-                    <TouchableOpacity
-                      style={{ backgroundColor: '#25D366', padding: 8, borderRadius: 8, marginRight: 8 }}
-                      onPress={() => handleAccept(String(getFromId(notification)))}
-                    >
-                      <Text style={{ color: '#fff' }}>Accept</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={{ backgroundColor: '#ff4444', padding: 8, borderRadius: 8 }}
-                      onPress={() => handleReject(String(getFromId(notification)))}
-                    >
-                      <Text style={{ color: '#fff' }}>Delete</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                <Text style={[styles.notificationTitle, darkMode && { color: '#fff' }]}>{notification.content}</Text>
+                <Text style={[styles.notificationMessage, darkMode && { color: '#bbb' }]}>{notification.content}</Text>
+                <Text style={[styles.notificationTime, darkMode && { color: '#888' }]}>{fromNow(notification.createdAt)}</Text>
+                
               </View>
-              {!notification.read && (
+              {!notification.isRead && (
                 <View style={styles.unreadDot} />
               )}
             </TouchableOpacity>

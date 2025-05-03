@@ -8,10 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 import getServerUrl from '../utils/server';
-// لا تحفظ السيرفر في متغير ثابت، استدعِ الدالة مباشرة عند كل طلب
-// const SERVER_URL = getServerUrl();
 
-// Helper: format last seen
 function formatLastSeen(dateStr: string | undefined) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -40,7 +37,7 @@ export default function FriendsScreen() {
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
 
   const [showNameModal, setShowNameModal] = useState(false);
-  const [modalName, setModalName] = useState('');
+  const [modalName] = useState('');
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [friendToDelete, setFriendToDelete] = useState<any>(null);

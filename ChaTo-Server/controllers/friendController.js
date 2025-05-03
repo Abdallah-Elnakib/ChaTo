@@ -78,7 +78,8 @@ exports.sendFriendRequest = async (req, res) => {
     
     res.json({ message: 'Friend request sent.' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -214,6 +215,7 @@ exports.unblockUser = async (req, res) => {
     await user.save();
     res.json({ message: 'User unblocked.' });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 }; 

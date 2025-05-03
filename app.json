@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "ChaTo-2",
-    "slug": "ChaTo-2",
+    "name": "ChaTo",
+    "slug": "ChaTo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/messenger.png",
-    "scheme": "chato2",
+    "scheme": "ChaTo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -14,7 +14,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/messenger.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#25D366"
       },
       "edgeToEdgeEnabled": true
     },
@@ -31,7 +31,7 @@
           "image": "./assets/images/messenger.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#25D366"
         }
       ]
     ],

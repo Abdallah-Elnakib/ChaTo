@@ -1,0 +1,8 @@
+import { Redirect } from 'expo-router';
+import React from 'react';
+
+// Hide this screen completely from navigation
+export default function ChatRoute() {
+  // Redirect any direct access to this route to the standalone chat screen
+  return <Redirect href="/screens/ChatScreen" as any />;
+}

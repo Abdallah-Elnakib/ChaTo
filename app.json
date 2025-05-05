@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "ChaTo",
+    "slug": "ChaTo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/messenger.png",
+    "scheme": "ChaTo",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/messenger.png",
+        "backgroundColor": "#25D366"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/messenger.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/messenger.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#25D366"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
